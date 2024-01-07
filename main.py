@@ -26,22 +26,30 @@ async def start_handler(message: types.Message):
 # Обработчик текстовых сообщений
 @dp.message_handler(content_types=ContentType.TEXT)
 async def text_message_handler(message: types.Message):
-    # Получаем текст сообщения
+    # Получаем тело сообщения
     text = message.text
+
+    # Формируем информацию о пользователе для упоминания
+    user_mention = f"Отправитель: @{message.from_user.username}" if message.from_user.username \
+        else f"Отправитель: [{message.from_user.first_name}](tg://user?id={message.from_user.id})"
 
     # Проверяем, есть ли у пользователя фотография
     if message.photo:
         photo = message.photo[-1]
-        caption = message.caption if message.caption else '-'
+        caption = f"{user_mention}\n\n{message.caption if message.caption else '-'}"
 
-        # Отправляем фотографию и текст в целевой чат
-        await bot.send_photo(chat_id=TARGET_CHAT_ID, photo=photo.file_id, caption=caption)
+        # Отправляем фотографию и текст с упоминанием пользователя в целевой чат
+        await bot.send_photo(chat_id=TARGET_CHAT_ID, photo=photo.file_id, caption=caption, parse_mode='Markdown')
     else:
-        # Отправляем только текст в целевой чат
-        await bot.send_message(chat_id=TARGET_CHAT_ID, text=text)
+        # Формируем текст для отправки с упоминанием пользователя
+        text_with_mention = f"{user_mention}\n\n{text}"
+
+        # Отправляем текст с упоминанием пользователя в целевой чат
+        await bot.send_message(chat_id=TARGET_CHAT_ID, text=text_with_mention, parse_mode='Markdown')
 
     # Подтверждаем, что информация была отправлена успешно
     await bot.send_message(message.chat.id, 'Спасибо за предоставленную информацию! Чтобы указать что-то ещё, нажмите /start')
+
 
 # Запуск бота
 if __name__ == '__main__':
